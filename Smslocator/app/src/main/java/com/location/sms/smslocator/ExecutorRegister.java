@@ -21,8 +21,16 @@ public class ExecutorRegister implements Executor {
 
         switch(count) {
             case 0:
-                return new JSONObject();
+                return usr_json;
             case 1:
+                Recorder rec = Recorder.getSharedRecorder();
+                SQLiteDatabase db = rec.getWritableDatabase();
+                try {
+                    rec.changeDeviceNameById(db, device_id, usr_json.getString("name"));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
                 return null;
             default:
                 return null;

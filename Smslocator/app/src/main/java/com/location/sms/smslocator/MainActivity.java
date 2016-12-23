@@ -11,6 +11,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.mcnlab.lib.smscommunicate.CommandHandler;
 import org.mcnlab.lib.smscommunicate.Recorder;
 import org.mcnlab.lib.smscommunicate.UserDefined;
@@ -118,7 +120,14 @@ public class MainActivity extends Activity {
                     int device_id = rec.getDeviceIdByPhonenumberOrCreate(db, phonenumber);
                     rec.changeDeviceNameById(db, device_id, "GUIDER");
 
-                    hdlr.execute("REGISTER", device_id, 0, null);
+                    JSONObject registration_info = new JSONObject();
+                    try {
+                        registration_info.put("name", name);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
+                    hdlr.execute("REGISTER", device_id, 0, registration_info);
                     createCustomerView();
                 }
             });
