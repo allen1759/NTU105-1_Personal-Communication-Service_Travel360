@@ -2,9 +2,13 @@ package com.location.sms.smslocator;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteDatabase;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -32,6 +36,7 @@ import java.util.ArrayList;
 
 public class MainActivity extends Activity {
     public final static String LOG_TAG = "MainActivity";
+    public static double mylatitude = 0.0, mylongitude = 0.0;
 
     //For Guider View
     public static ArrayList<CustomerInfo> customer_data = new ArrayList<CustomerInfo>();
@@ -41,12 +46,14 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         getLocationPermission();
+        setUpLocationReceiver();
 
         UserDefined.filter = "$FINDME$";
         Recorder.init(this, "MainActivity");
         CommandHandler.init(this);
         CommandHandler.getSharedCommandHandler().addExecutor("WHERE", new ExecutorWhere());
         CommandHandler.getSharedCommandHandler().addExecutor("REGISTER", new ExecutorRegister());
+        CommandHandler.getSharedCommandHandler().addExecutor("SENDPOSITION", new ExecutorSendPosition());
 
         createMainView();
     }
@@ -66,6 +73,36 @@ public class MainActivity extends Activity {
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.SEND_SMS}, 0);
+        }
+    }
+
+    void setUpLocationReceiver() {
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        try {
+            locationManager.requestSingleUpdate(LocationManager.NETWORK_PROVIDER, new LocationListener() {
+                @Override
+                public void onLocationChanged(Location location) {
+                    mylatitude = location.getLatitude();
+                    mylongitude = location.getLongitude();
+                }
+
+                @Override
+                public void onStatusChanged(String provider, int status, Bundle extras) {
+
+                }
+
+                @Override
+                public void onProviderEnabled(String provider) {
+
+                }
+
+                @Override
+                public void onProviderDisabled(String provider) {
+
+                }
+            }, getMainLooper());
+        } catch (SecurityException e) {
+            e.printStackTrace();
         }
     }
 
@@ -110,15 +147,43 @@ public class MainActivity extends Activity {
     {
         setContentView(R.layout.guider_view);
 
+        Button broadcast_btn = (Button) findViewById(R.id.broadcast_btn);
+        Button getloc_btn = (Button) findViewById(R.id.getloc_btn);
         ListView customer_listview = (ListView) findViewById(R.id.customer_list);
+
+        broadcast_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                JSONObject position_info = new JSONObject();
+                try {
+                    position_info.put("lat", mylatitude).put("lon", mylongitude);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                CommandHandler hdlr = CommandHandler.getSharedCommandHandler();
+                for(int i = 1; i < customer_data.size(); i++)
+                    if(!customer_data.get(i).name.equals("GUIDER"))
+                        hdlr.execute("SENDPOSITION", Integer.parseInt(customer_data.get(i).device_id), 0, position_info);
+            }
+        });
+
+        getloc_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
 
         Recorder rec = Recorder.getSharedRecorder();
         SQLiteDatabase db = rec.getWritableDatabase();
         Object[][] devices = rec.getAllDevices(db);
 
         customer_data.clear();
+        CustomerInfo customer;
+        customer = new CustomerInfo(String.valueOf(-1), "成員名稱", "聯絡電話");
+        customer_data.add(customer);
         for(int i = 0; i < devices.length; i++) {
-            CustomerInfo customer;
             customer = new CustomerInfo((String) String.valueOf(devices[i][0]), (String) devices[i][1], (String) devices[i][2]);
             if(!customer.name.equals("GUIDER"))
                 customer_data.add(customer);
@@ -165,13 +230,30 @@ public class MainActivity extends Activity {
             holder.name.setText(customer.name);
             holder.phonenumber.setText(customer.phonenumber);
             holder.selected.setTag(position);
+            holder.selected.setChecked(customer.selected);
+
             holder.selected.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     int position = (int) buttonView.getTag();
-                    CustomerInfo customer = customer_data.get(position);
-                    customer.selected = isChecked;
-                    customer_data.set(position, customer);
+                    CustomerInfo customer;
+
+                    if(position != 0) {
+                        customer = customer_data.get(position);
+                        customer.selected = isChecked;
+                        customer_data.set(position, customer);
+                    }
+                    else {
+                        for(int i = 0; i < customer_data.size(); i++) {
+                            customer = customer_data.get(i);
+                            customer.selected = isChecked;
+                            customer_data.set(i, customer);
+                        }
+                        ListView customer_listview = (ListView) findViewById(R.id.customer_list);
+                        CustomerAdapter customerAdapter = new CustomerAdapter(MainActivity.this, R.layout.customer_list_row, customer_data);
+                        customer_listview.setAdapter(customerAdapter);
+                        customerAdapter.notifyDataSetChanged();
+                    }
                 }
             });
 
