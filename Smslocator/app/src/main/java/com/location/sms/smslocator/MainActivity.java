@@ -2,6 +2,7 @@ package com.location.sms.smslocator;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Fragment;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteDatabase;
@@ -10,6 +11,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -42,6 +44,7 @@ import java.util.ArrayList;
 public class MainActivity extends Activity {
 
     public static double mylatitude = 0.0, mylongitude = 0.0;
+    boolean customerMapOn = false;
 
     //For Guider View
     public static ArrayList<CustomerInfo> customer_data = new ArrayList<CustomerInfo>();
@@ -68,6 +71,11 @@ public class MainActivity extends Activity {
 
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             // When pressing "back" button
+            if(customerMapOn)
+            {
+                destroyMap(R.id.targetmap);
+                customerMapOn = false;
+            }
             createMainView();
 
             return true;
@@ -183,50 +191,7 @@ public class MainActivity extends Activity {
                 }
             });
 
-            ((MapFragment) getFragmentManager().findFragmentById(R.id.targetmap)).getMapAsync(new OnMapReadyCallback() {
-                @Override
-                public void onMapReady(GoogleMap mMap) {
-                    Recorder rec = Recorder.getSharedRecorder();
-                    SQLiteDatabase db = rec.getWritableDatabase();
-                    Object[][] devices = rec.getAllDevices(db);
-                    int i;
-                    for (i = 0; i < devices.length; i++)
-                        if (devices[i][1].equals("GUIDER"))
-                            break;
-                    Object[][] commands = rec.getCommandsByDeviceId(db, i);
-                    String content = null;
-                    for (i = 0; i < commands.length; i++)
-                        if (commands[i][5].equals("SENDPOSITION"))
-                            content = (String) (commands[i][6]);
-
-                    if (content != null) {
-                        try {
-                            JSONObject json = new JSONObject(content);
-
-                            if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                                    || ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 0);
-                            }
-
-                            mMap.setMyLocationEnabled(true);
-                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(json.getDouble("lat"), json.getDouble("lon")), 12));
-                            mMap.addMarker(new MarkerOptions().position(new LatLng(json.getDouble("lat"), json.getDouble("lon")))
-                                    .title("集合地點")).showInfoWindow();
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else if (mylatitude != 0.0 && mylongitude != 0.0) {
-                        if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                                || ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 0);
-                        }
-
-                        mMap.setMyLocationEnabled(true);
-                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mylatitude, mylongitude), 12));
-                    }
-                }
-            });
-
+            setUpTargetMap();
         } else {
             setContentView(R.layout.customer_register_view);
 
@@ -269,7 +234,7 @@ public class MainActivity extends Activity {
         return_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setUpCustomersMap();
+                destroyMap(R.id.customersmap);
                 switch (pre_state) {
                     case 0:
                         createGuiderView();
@@ -402,6 +367,53 @@ public class MainActivity extends Activity {
         }
     }
 
+    public void setUpTargetMap () {
+        customerMapOn = true;
+        ((MapFragment) getFragmentManager().findFragmentById(R.id.targetmap)).getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(GoogleMap mMap) {
+                Recorder rec = Recorder.getSharedRecorder();
+                SQLiteDatabase db = rec.getWritableDatabase();
+                Object[][] devices = rec.getAllDevices(db);
+                int i;
+                for (i = 0; i < devices.length; i++)
+                    if (devices[i][1].equals("GUIDER"))
+                        break;
+                Object[][] commands = rec.getCommandsByDeviceId(db, i);
+                String content = null;
+                for (i = 0; i < commands.length; i++)
+                    if (commands[i][5].equals("SENDPOSITION"))
+                        content = (String) (commands[i][6]);
+
+                if (content != null) {
+                    try {
+                        JSONObject json = new JSONObject(content);
+
+                        if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                                || ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 0);
+                        }
+
+                        mMap.setMyLocationEnabled(true);
+                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(json.getDouble("lat"), json.getDouble("lon")), 12));
+                        mMap.addMarker(new MarkerOptions().position(new LatLng(json.getDouble("lat"), json.getDouble("lon")))
+                                .title("集合地點")).showInfoWindow();
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                } else if (mylatitude != 0.0 && mylongitude != 0.0) {
+                    if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                            || ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 0);
+                    }
+
+                    mMap.setMyLocationEnabled(true);
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mylatitude, mylongitude), 12));
+                }
+            }
+        });
+    }
+
     public void setUpCustomersMap() {
         ((MapFragment) getFragmentManager().findFragmentById(R.id.customersmap)).getMapAsync(new OnMapReadyCallback() {
             @Override
@@ -425,5 +437,12 @@ public class MainActivity extends Activity {
                 }
             }
         });
+    }
+
+    public void destroyMap(int id) {
+        Fragment fragment = (getFragmentManager().findFragmentById(id));
+        android.app.FragmentTransaction ft = getFragmentManager().beginTransaction();
+        ft.remove(fragment);
+        ft.commit();
     }
 }
