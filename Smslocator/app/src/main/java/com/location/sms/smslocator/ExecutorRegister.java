@@ -30,6 +30,7 @@ public class ExecutorRegister implements Executor {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+                ((MainActivity) context).createGuiderView();
 
                 return null;
             default:
