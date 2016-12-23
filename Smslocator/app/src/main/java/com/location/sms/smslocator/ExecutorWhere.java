@@ -1,6 +1,7 @@
 package com.location.sms.smslocator;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -13,6 +14,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.mcnlab.lib.smscommunicate.CommandHandler;
 import org.mcnlab.lib.smscommunicate.Executor;
+import org.mcnlab.lib.smscommunicate.Recorder;
 
 public class ExecutorWhere implements Executor {
     @Override
@@ -23,54 +25,35 @@ public class ExecutorWhere implements Executor {
             case 0:
                 return new JSONObject();
             case 1:
-                final int device_id_closure = device_id;
+                JSONObject new_usr_json = new JSONObject();
+                double latitude = MainActivity.mylatitude;
+                double longitude = MainActivity.mylongitude;
 
-                LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
                 try {
-                    locationManager.requestSingleUpdate(LocationManager.NETWORK_PROVIDER, new LocationListener() {
-                        @Override
-                        public void onLocationChanged(Location location) {
-                            JSONObject new_usr_json = new JSONObject();
-                            double latitude = location.getLatitude();
-                            double longitude = location.getLongitude();
-
-                            try {
-                                new_usr_json.put("lat", latitude).put("lon", longitude);
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-
-                            CommandHandler.getSharedCommandHandler().execute("WHERE", device_id_closure, 2, new_usr_json);
-                        }
-
-                        @Override
-                        public void onStatusChanged(String provider, int status, Bundle extras) {
-
-                        }
-
-                        @Override
-                        public void onProviderEnabled(String provider) {
-
-                        }
-
-                        @Override
-                        public void onProviderDisabled(String provider) {
-
-                        }
-                    }, null);
-                } catch (SecurityException e) {
+                    new_usr_json.put("lat", latitude).put("lon", longitude);
+                } catch (JSONException e) {
                     e.printStackTrace();
                 }
+
+                CommandHandler.getSharedCommandHandler().execute("WHERE", device_id, 2, new_usr_json);
 
                 return null;
             case 2:
                 return usr_json;
-            default:
+            case 3:
                 try {
-                    Log.d("Location", "lat=" + usr_json.getDouble("lat") + ",lon=" + usr_json.getDouble("lon"));
+                    Recorder rec = Recorder.getSharedRecorder();
+                    SQLiteDatabase db = rec.getWritableDatabase();
+                    Object [] device_info = rec.getDeviceById(db, device_id);
+                    MainActivity.marker_data.add(new CustomerLocationInfo((String) device_info[0], (String) device_info[1], (String) device_info[2],
+                            String.valueOf(usr_json.getDouble("lat")), String.valueOf(usr_json.getDouble("lon"))));
+                    ((MainActivity) context).setUpCustomersMap();
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+
+                return null;
+            default:
                 return null;
         }
     }

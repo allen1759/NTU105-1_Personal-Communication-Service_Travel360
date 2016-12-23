@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <Button
+        android:id="@+id/return_btn"
+        android:text="回上一頁"
+        android:layout_width="match_parent"
+        android:layout_height="150px"/>
+
+    <fragment
+        android:id="@+id/customersmap"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:name="com.google.android.gms.maps.MapFragment"
+        android:layout_below="@+id/return_btn"/>
+</RelativeLayout>
