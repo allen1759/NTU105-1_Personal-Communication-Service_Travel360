@@ -5,22 +5,17 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="phone"
+        android:id="@+id/phonenumber" />
+
     <Button
-        android:id="@+id/guider_btn"
-        android:text="我是導遊"
+        android:text="Button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="55dp"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true" />
-
-    <Button
-        android:id="@+id/customer_btn"
-        android:text="我是遊客"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
-        android:layout_centerHorizontal="true"
-        android:layout_below="@+id/guider_btn" />
-
+        android:id="@+id/findme"
+        android:layout_alignParentTop="true" />
 </RelativeLayout>

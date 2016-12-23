@@ -17,11 +17,11 @@ import org.mcnlab.lib.smscommunicate.Executor;
 public class ExecutorWhere implements Executor {
     @Override
     public JSONObject execute(Context context, int device_id, int count, JSONObject usr_json) {
-        Log.d("EXECUTOR", "Count=" + count);
+        Log.d("EXECUTOR WHERE", "Count=" + count);
 
         switch(count) {
             case 0:
-                return (new JSONObject());
+                return new JSONObject();
             case 1:
                 final int device_id_closure = device_id;
 
