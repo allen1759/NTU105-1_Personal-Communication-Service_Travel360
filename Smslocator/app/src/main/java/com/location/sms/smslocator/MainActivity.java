@@ -4,6 +4,8 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
@@ -453,6 +455,7 @@ public class MainActivity extends Activity {
                 public void onLocationChanged(Location location) {
                     mylatitude = location.getLatitude();
                     mylongitude = location.getLongitude();
+                    checkDistanceFromTarget(mylatitude, mylongitude, "你");
                 }
 
                 @Override
@@ -472,6 +475,41 @@ public class MainActivity extends Activity {
             }, getMainLooper());
         } catch (SecurityException e) {
             e.printStackTrace();
+        }
+    }
+
+    void checkDistanceFromTarget(double latitude, double longitude, String name)
+    {
+        Recorder rec = Recorder.getSharedRecorder();
+        SQLiteDatabase db = rec.getWritableDatabase();
+        Object[][] commands = rec.getAllCommands(db);
+        String content = null;
+        int i;
+        for (i = 0; i < commands.length; i++)
+            if (commands[i][5].equals("SENDPOSITION"))
+                content = (String) (commands[i][6]);
+
+        if (content != null && latitude != 0.0 && longitude != 0.0) {
+            try {
+                JSONObject json = new JSONObject(content);
+                float [] dist = new float[1];
+                Location.distanceBetween(latitude, longitude, json.getDouble("lat"), json.getDouble("lon"), dist);
+                if(dist[0] > 10000) //10000 meters
+                {
+                    //Notification
+                    NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE); // 取得系統的通知服務
+                    Notification notification = null; // 建立通知
+                    notification = new Notification.Builder(getApplicationContext())
+                            .setSmallIcon(R.drawable.icon).setContentTitle("位置太遠警告")
+                            .setContentText(name + "距離目的地太遠").build();
+                    long[] tVibrate = {0, 100, 200, 300};
+                    notification.vibrate = tVibrate;
+                    notificationManager.notify(1, notification); // 發送通知
+                }
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -568,6 +606,7 @@ public class MainActivity extends Activity {
                 CustomerLocationInfo marker;
                 for (int i = 0; i < marker_data.size(); i++) {
                     marker = marker_data.get(i);
+                    checkDistanceFromTarget(Double.parseDouble(marker.latitude), Double.parseDouble(marker.longitude), marker.name);
 
                     mMap.addMarker(new MarkerOptions().position(new LatLng(Double.parseDouble(marker.latitude), Double.parseDouble(marker.longitude)))
                             .title(marker.name)
