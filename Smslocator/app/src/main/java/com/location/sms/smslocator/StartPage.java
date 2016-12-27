@@ -17,8 +17,8 @@ public class StartPage extends Activity {
         setContentView(R.layout.start_page);
 
         final ImageView image = (ImageView) this.findViewById(R.id.image);
-        final Animation am1 = new AlphaAnimation(0, 1);
-        final Animation am2 = new AlphaAnimation(1, 0);
+        final Animation am1 = new AlphaAnimation(0.1f, 1.0f);
+        final Animation am2 = new AlphaAnimation(1.0f, 0.1f);
         am1.setDuration(2000);
         am2.setDuration(2000);
 

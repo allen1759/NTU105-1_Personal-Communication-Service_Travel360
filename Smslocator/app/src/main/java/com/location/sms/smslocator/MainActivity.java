@@ -2,8 +2,10 @@ package com.location.sms.smslocator;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
@@ -20,6 +22,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.CheckedTextView;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -43,12 +46,7 @@ import java.util.ArrayList;
 
 public class MainActivity extends Activity {
 
-    public static double mylatitude = 0.0, mylongitude = 0.0;
-    boolean customerMapOn = false;
-
-    //For Guider View
-    public static ArrayList<CustomerInfo> customer_data = new ArrayList<CustomerInfo>();
-    public static ArrayList<CustomerLocationInfo> marker_data= new ArrayList<CustomerLocationInfo>();
+    // ----------------------------------------------------------------         Default Activity Functions           ----------------------------------------------------------------------
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,10 +61,12 @@ public class MainActivity extends Activity {
         CommandHandler.getSharedCommandHandler().addExecutor("WHERE", new ExecutorWhere());
         CommandHandler.getSharedCommandHandler().addExecutor("REGISTER", new ExecutorRegister());
         CommandHandler.getSharedCommandHandler().addExecutor("SENDPOSITION", new ExecutorSendPosition());
+        CommandHandler.getSharedCommandHandler().addExecutor("EMERGENCY", new ExecutorEmergency());
 
         createMainView();
     }
 
+    @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
 
         if (keyCode == KeyEvent.KEYCODE_BACK) {
@@ -83,6 +83,10 @@ public class MainActivity extends Activity {
 
         return super.onKeyDown(keyCode, event);
     }
+
+    // ----------------------------------------------------------------         View Related Functions           ----------------------------------------------------------------------
+    public static ArrayList<CustomerInfo> customer_data = new ArrayList<CustomerInfo>();
+    public static ArrayList<CustomerLocationInfo> marker_data= new ArrayList<CustomerLocationInfo>();
 
     void createMainView() {
         setContentView(R.layout.activity_main);
@@ -117,17 +121,48 @@ public class MainActivity extends Activity {
         broadcast_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                JSONObject position_info = new JSONObject();
-                try {
-                    position_info.put("lat", mylatitude).put("lon", mylongitude);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
 
-                CommandHandler hdlr = CommandHandler.getSharedCommandHandler();
-                for (int i = 1; i < customer_data.size(); i++)
-                    if (!customer_data.get(i).name.equals("GUIDER") && customer_data.get(i).selected)
-                        hdlr.execute("SENDPOSITION", Integer.parseInt(customer_data.get(i).device_id), 0, position_info);
+                LayoutInflater li = LayoutInflater.from(MainActivity.this);
+                View promptsView = li.inflate(R.layout.selectpostition_dialog, null);
+                AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
+                alertDialogBuilder.setTitle("選擇地點");
+                alertDialogBuilder.setView(promptsView);
+
+                setUpSelectPosMap();
+
+                alertDialogBuilder
+                        .setPositiveButton("確定",
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    if(selected_latitude != 0.0 && selected_longitude != 0.0) {
+                                        JSONObject position_info = new JSONObject();
+                                        try {
+                                            position_info.put("lat", selected_latitude).put("lon", selected_longitude);
+                                        } catch (JSONException e) {
+                                            e.printStackTrace();
+                                        }
+
+                                        CommandHandler hdlr = CommandHandler.getSharedCommandHandler();
+                                        for (int i = 1; i < customer_data.size(); i++)
+                                            if (!customer_data.get(i).name.equals("GUIDER") && customer_data.get(i).selected)
+                                                hdlr.execute("SENDPOSITION", Integer.parseInt(customer_data.get(i).device_id), 0, position_info);
+                                    }
+                                    else
+                                    {
+                                        Toast.makeText(MainActivity.this, "尚未選擇位置", Toast.LENGTH_LONG).show();
+                                    }
+                                }
+                            })
+                        .setNegativeButton("取消",
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                    destroyMap(R.id.selectposmap);
+                                }
+                            });
+                AlertDialog alertDialog = alertDialogBuilder.create();
+                alertDialog.show();
             }
         });
 
@@ -173,6 +208,8 @@ public class MainActivity extends Activity {
             setContentView(R.layout.customer_view);
 
             Button getguiderloc_btn = (Button) findViewById(R.id.getguiderloc_btn);
+            Button emergency_btn = (Button) findViewById(R.id.emergency_btn);
+
             getguiderloc_btn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -191,11 +228,75 @@ public class MainActivity extends Activity {
                 }
             });
 
+            emergency_btn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    final String problem_list[] = {"", ""};
+                    LayoutInflater li = LayoutInflater.from(MainActivity.this);
+                    View promptsView = li.inflate(R.layout.emergency_dialog, null);
+                    AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
+                    final CheckedTextView problem1 = (CheckedTextView) promptsView.findViewById(R.id.problem1);
+                    final CheckedTextView problem2 = (CheckedTextView) promptsView.findViewById(R.id.problem2);
+                    problem1.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            problem1.setChecked(!problem1.isChecked());
+                            problem_list[0] = problem1.isChecked() ? problem1.getText().toString() : "";
+                        }
+                    });
+                    problem2.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            problem2.setChecked(!problem2.isChecked());
+                            problem_list[1] = problem2.isChecked() ? problem2.getText().toString() : "";
+                        }
+                    });
+                    alertDialogBuilder.setView(promptsView);
+
+                    alertDialogBuilder
+                        .setPositiveButton("確定",
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    Recorder rec = Recorder.getSharedRecorder();
+                                    CommandHandler hdlr = CommandHandler.getSharedCommandHandler();
+                                    SQLiteDatabase db = rec.getWritableDatabase();
+                                    Object[][] devices = rec.getAllDevices(db);
+                                    int i;
+                                    for (i = 0; i < devices.length; i++)
+                                        if (devices[i][1].equals("GUIDER"))
+                                            break;
+
+                                    JSONObject emergency_info = new JSONObject();
+                                    try {
+                                        String problems = "";
+                                        for(int j = 0; j < problem_list.length; j++)
+                                            problems += (problem_list[j] + ", ");
+                                        emergency_info.put("problem", problems);
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+
+                                    hdlr.execute("EMERGENCY", (int)(devices[i][0]), 0, emergency_info);
+                                }
+                            })
+                        .setNegativeButton("取消",
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            });
+                    AlertDialog alertDialog = alertDialogBuilder.create();
+                    alertDialog.show();
+                }
+            });
+
             setUpTargetMap();
         } else {
             setContentView(R.layout.customer_register_view);
 
             Button regisrer_btn = (Button) findViewById(R.id.register_btn);
+
             regisrer_btn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -247,6 +348,8 @@ public class MainActivity extends Activity {
         });
     }
 
+    // ---------------------------------------------------------------         ListView Related Classes           ---------------------------------------------------------------------
+
     public class CustomerAdapter extends ArrayAdapter<CustomerInfo> {
         Activity activity;
         int layoutResourceId;
@@ -265,7 +368,7 @@ public class MainActivity extends Activity {
         @Override
         public View getView(int position, View convertView, final ViewGroup parent) {
             View row = convertView;
-            CustomerHolder holder = null;
+            CustomerHolder holder;
 
             if (row == null) {
                 LayoutInflater inflater = LayoutInflater.from(this.activity);
@@ -320,6 +423,8 @@ public class MainActivity extends Activity {
         }
     }
 
+    // --------------------------------------------------------------         Permission Related Functions           --------------------------------------------------------------------
+
     void getLocationPermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION ) != PackageManager.PERMISSION_GRANTED
                 || ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -336,6 +441,9 @@ public class MainActivity extends Activity {
                     new String[]{Manifest.permission.SEND_SMS}, 0);
         }
     }
+
+    // ----------------------------------------------------------------         GPS Location Functions           ----------------------------------------------------------------------
+    public static double mylatitude = 0.0, mylongitude = 0.0;
 
     void setUpLocationReceiver() {
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -365,6 +473,37 @@ public class MainActivity extends Activity {
         } catch (SecurityException e) {
             e.printStackTrace();
         }
+    }
+
+    // ----------------------------------------------------------------         Map Related Functions           ----------------------------------------------------------------------
+    boolean customerMapOn = false;
+    double selected_latitude = 0.0, selected_longitude = 0.0;
+
+    public void setUpSelectPosMap () {
+        ((MapFragment) getFragmentManager().findFragmentById(R.id.selectposmap)).getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(final GoogleMap mMap) {
+                if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                        || ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 0);
+                }
+
+                mMap.setMyLocationEnabled(true);
+                if (mylatitude != 0.0 && mylongitude != 0.0) {
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mylatitude, mylongitude), 12));
+                }
+
+                mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+                    @Override
+                    public void onMapClick(LatLng latLng) {
+                        mMap.addMarker(new MarkerOptions().position(new LatLng(latLng.latitude, latLng.longitude))
+                                .title("集合地點")).showInfoWindow();
+                        selected_latitude = latLng.latitude;
+                        selected_longitude = latLng.longitude;
+                    }
+                });
+            }
+        });
     }
 
     public void setUpTargetMap () {
@@ -433,7 +572,6 @@ public class MainActivity extends Activity {
                     mMap.addMarker(new MarkerOptions().position(new LatLng(Double.parseDouble(marker.latitude), Double.parseDouble(marker.longitude)))
                             .title(marker.name)
                             .snippet(marker.phonenumber)).showInfoWindow();
-                    ;
                 }
             }
         });

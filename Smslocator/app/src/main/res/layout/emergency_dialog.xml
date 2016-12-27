@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical" >
+
+    <CheckedTextView
+        android:id="@+id/problem1"
+        android:layout_width="match_parent"
+        android:layout_height="150px"
+        android:text="找不到集合地點"
+        android:typeface="monospace"
+        android:gravity="center"
+        android:textAlignment="center"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:checkMark="?android:attr/listChoiceIndicatorMultiple"/>
+
+    <CheckedTextView
+        android:id="@+id/problem2"
+        android:layout_width="match_parent"
+        android:layout_height="150px"
+        android:text="遇到危險"
+        android:typeface="monospace"
+        android:gravity="center"
+        android:textAlignment="center"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:checkMark="?android:attr/listChoiceIndicatorMultiple"/>
+</LinearLayout>
