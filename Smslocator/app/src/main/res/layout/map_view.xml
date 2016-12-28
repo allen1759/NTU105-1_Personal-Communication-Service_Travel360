@@ -5,9 +5,11 @@
 
     <Button
         android:id="@+id/return_btn"
+        android:background="@drawable/btn_blue"
         android:text="回上一頁"
+        android:textSize="30dp"
         android:layout_width="match_parent"
-        android:layout_height="150px"/>
+        android:layout_height="200px"/>
 
     <fragment
         android:id="@+id/customersmap"

@@ -12,14 +12,18 @@
 
         <Button
             android:id="@+id/broadcast_btn"
+            android:background="@drawable/btn_blue"
             android:text="發送集合地點"
+            android:textSize="25dp"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"/>
 
         <Button
             android:id="@+id/getloc_btn"
+            android:background="@drawable/btn_blue"
             android:text="搜尋位置"
+            android:textSize="25dp"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"/>

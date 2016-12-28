@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -215,6 +216,8 @@ public class MainActivity extends Activity {
             getguiderloc_btn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    destroyMap(R.id.targetmap);
+
                     CommandHandler hdlr = CommandHandler.getSharedCommandHandler();
                     Recorder rec = Recorder.getSharedRecorder();
                     SQLiteDatabase db = rec.getWritableDatabase();
@@ -233,6 +236,7 @@ public class MainActivity extends Activity {
             emergency_btn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+
                     final String problem_list[] = {"", ""};
                     LayoutInflater li = LayoutInflater.from(MainActivity.this);
                     View promptsView = li.inflate(R.layout.emergency_dialog, null);
@@ -390,6 +394,12 @@ public class MainActivity extends Activity {
             holder.phonenumber.setText(customer.phonenumber);
             holder.selected.setTag(position);
             holder.selected.setChecked(customer.selected);
+
+            if(position == 0)
+            {
+                holder.name.setTextColor(Color.RED);
+                holder.phonenumber.setTextColor(Color.RED);
+            }
 
             holder.selected.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
