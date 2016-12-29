@@ -30,9 +30,16 @@ public class ExecutorEmergency implements Executor {
                 NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE); // 取得系統的通知服務
                 Notification notification = null; // 建立通知
                 try {
+                    String [] problems = usr_json.getString("problem").split(",");
+                    String problem = "";
+                    for(int i = 0; i < problems.length; i++)
+                        if(problems[i].equals("location"))
+                            problem += "找不到地點 ";
+                        else
+                            problem += "遇到危險 ";
                     notification = new Notification.Builder(context)
                         .setSmallIcon(R.drawable.icon).setContentTitle("緊急通知")
-                        .setContentText((String)(o[1]) + " " + usr_json.getString("problem")).build();
+                        .setContentText((String)(o[1]) + " " + problem).build();
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }

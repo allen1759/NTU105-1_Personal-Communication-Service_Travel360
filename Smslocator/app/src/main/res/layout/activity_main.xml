@@ -1,30 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:background="@drawable/start_page"
+    android:background="@drawable/main_page"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
     <Button
         android:id="@+id/guider_btn"
-        android:background="@drawable/btn_blue"
+        android:background="@drawable/btn_style"
         android:text="我是導遊"
         android:textSize="40dp"
+        android:textColor="@android:color/white"
         android:layout_width="match_parent"
         android:layout_height="250px"
-        android:layout_marginTop="300dp"
+        android:layout_marginTop="170dp"
         android:layout_marginLeft="10dp"
         android:layout_marginRight="10dp"/>
 
     <Button
         android:id="@+id/customer_btn"
-        android:background="@drawable/btn_blue"
+        android:background="@drawable/btn_style"
         android:text="我是遊客"
         android:textSize="40dp"
+        android:textColor="@android:color/white"
         android:layout_width="match_parent"
         android:layout_height="250px"
-        android:layout_marginTop="25dp"
+        android:layout_marginTop="60dp"
         android:layout_marginLeft="10dp"
         android:layout_marginRight="10dp"/>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="right|bottom">
+        <ImageView
+            android:layout_width="800px"
+            android:layout_height="300px"
+            android:src="@drawable/mark"/>
+    </RelativeLayout>
 
 </LinearLayout>

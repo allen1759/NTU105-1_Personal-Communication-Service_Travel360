@@ -13,18 +13,20 @@
 
         <Button
             android:id="@+id/getguiderloc_btn"
-            android:background="@drawable/btn_blue"
+            android:background="@drawable/btn_style"
             android:text="取得導遊位置"
             android:textSize="25dp"
+            android:textColor="@android:color/white"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"/>
 
         <Button
             android:id="@+id/emergency_btn"
-            android:background="@drawable/btn_blue"
+            android:background="@drawable/btn_style"
             android:text="緊急連絡導遊"
             android:textSize="25dp"
+            android:textColor="@android:color/white"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"/>

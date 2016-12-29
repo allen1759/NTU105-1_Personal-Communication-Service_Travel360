@@ -45,7 +45,7 @@ public class ExecutorWhere implements Executor {
                     Recorder rec = Recorder.getSharedRecorder();
                     SQLiteDatabase db = rec.getWritableDatabase();
                     Object [] device_info = rec.getDeviceById(db, device_id);
-                    MainActivity.marker_data.add(new CustomerLocationInfo((String) device_info[0], (String) device_info[1], (String) device_info[2],
+                    MainActivity.marker_data.add(new CustomerLocationInfo((String) String.valueOf(device_info[0]), (String) device_info[1], (String) device_info[2],
                             String.valueOf(usr_json.getDouble("lat")), String.valueOf(usr_json.getDouble("lon"))));
                     ((MainActivity) context).setUpCustomersMap();
                 } catch (JSONException e) {

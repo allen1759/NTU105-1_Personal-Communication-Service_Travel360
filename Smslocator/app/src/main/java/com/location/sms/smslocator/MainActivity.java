@@ -18,6 +18,7 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -50,6 +51,7 @@ import java.util.ArrayList;
 public class MainActivity extends Activity {
 
     // ----------------------------------------------------------------         Default Activity Functions           ----------------------------------------------------------------------
+    int pstate;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,13 +80,19 @@ public class MainActivity extends Activity {
             {
                 destroyMap(R.id.targetmap);
                 customerMapOn = false;
+                createMainView();
             }
-            createMainView();
+            else if(inGuiderPage)
+            {
+                inGuiderPage = false;
+                createMainView();
+            }
 
-            return true;
+            return false;
         }
-
-        return super.onKeyDown(keyCode, event);
+        else {
+            return super.onKeyDown(keyCode, event);
+        }
     }
 
     // ----------------------------------------------------------------         View Related Functions           ----------------------------------------------------------------------
@@ -115,6 +123,7 @@ public class MainActivity extends Activity {
     }
 
     void createGuiderView() {
+        inGuiderPage = true;
         setContentView(R.layout.guider_view);
 
         Button broadcast_btn = (Button) findViewById(R.id.broadcast_btn);
@@ -124,7 +133,7 @@ public class MainActivity extends Activity {
         broadcast_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                inGuiderPage = false;
                 LayoutInflater li = LayoutInflater.from(MainActivity.this);
                 View promptsView = li.inflate(R.layout.selectpostition_dialog, null);
                 AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
@@ -172,6 +181,7 @@ public class MainActivity extends Activity {
         getloc_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                inGuiderPage = false;
                 CommandHandler hdlr = CommandHandler.getSharedCommandHandler();
                 for (int i = 1; i < customer_data.size(); i++)
                     if (!customer_data.get(i).name.equals("GUIDER") && customer_data.get(i).selected)
@@ -217,6 +227,7 @@ public class MainActivity extends Activity {
                 @Override
                 public void onClick(View v) {
                     destroyMap(R.id.targetmap);
+                    customerMapOn = false;
 
                     CommandHandler hdlr = CommandHandler.getSharedCommandHandler();
                     Recorder rec = Recorder.getSharedRecorder();
@@ -247,14 +258,14 @@ public class MainActivity extends Activity {
                         @Override
                         public void onClick(View v) {
                             problem1.setChecked(!problem1.isChecked());
-                            problem_list[0] = problem1.isChecked() ? problem1.getText().toString() : "";
+                            problem_list[0] = problem1.isChecked() ? "location" : "";
                         }
                     });
                     problem2.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
                             problem2.setChecked(!problem2.isChecked());
-                            problem_list[1] = problem2.isChecked() ? problem2.getText().toString() : "";
+                            problem_list[1] = problem2.isChecked() ? "danger" : "";
                         }
                     });
                     alertDialogBuilder.setView(promptsView);
@@ -263,26 +274,28 @@ public class MainActivity extends Activity {
                         .setPositiveButton("確定",
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int id) {
+
                                     Recorder rec = Recorder.getSharedRecorder();
                                     CommandHandler hdlr = CommandHandler.getSharedCommandHandler();
                                     SQLiteDatabase db = rec.getWritableDatabase();
                                     Object[][] devices = rec.getAllDevices(db);
-                                    int i;
+                                    int i, device_id;
                                     for (i = 0; i < devices.length; i++)
                                         if (devices[i][1].equals("GUIDER"))
                                             break;
+                                    device_id = (int)(devices[i][0]);
 
                                     JSONObject emergency_info = new JSONObject();
                                     try {
                                         String problems = "";
                                         for(int j = 0; j < problem_list.length; j++)
-                                            problems += (problem_list[j] + ", ");
+                                            problems += (problem_list[j] + ",");
                                         emergency_info.put("problem", problems);
                                     } catch (JSONException e) {
                                         e.printStackTrace();
                                     }
 
-                                    hdlr.execute("EMERGENCY", (int)(devices[i][0]), 0, emergency_info);
+                                    hdlr.execute("EMERGENCY", device_id, 0, emergency_info);
                                 }
                             })
                         .setNegativeButton("取消",
@@ -335,6 +348,7 @@ public class MainActivity extends Activity {
     }
 
     void createMapView(final int pre_state) {
+        pstate = pre_state;
         setContentView(R.layout.map_view);
 
         Button return_btn = (Button) findViewById(R.id.return_btn);
@@ -483,6 +497,30 @@ public class MainActivity extends Activity {
 
                 }
             }, getMainLooper());
+
+            locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, new LocationListener() {
+                @Override
+                public void onLocationChanged(Location location) {
+                    mylatitude = location.getLatitude();
+                    mylongitude = location.getLongitude();
+                    checkDistanceFromTarget(mylatitude, mylongitude, "你");
+                }
+
+                @Override
+                public void onStatusChanged(String provider, int status, Bundle extras) {
+
+                }
+
+                @Override
+                public void onProviderEnabled(String provider) {
+
+                }
+
+                @Override
+                public void onProviderDisabled(String provider) {
+
+                }
+            }, getMainLooper());
         } catch (SecurityException e) {
             e.printStackTrace();
         }
@@ -496,8 +534,10 @@ public class MainActivity extends Activity {
         String content = null;
         int i;
         for (i = 0; i < commands.length; i++)
-            if (commands[i][5].equals("SENDPOSITION"))
-                content = (String) (commands[i][6]);
+            if (commands[i][5].equals("SENDPOSITION")) {
+                if (!commands[i][6].equals(""))
+                    content = (String) (commands[i][6]);
+            }
 
         if (content != null && latitude != 0.0 && longitude != 0.0) {
             try {
@@ -524,7 +564,7 @@ public class MainActivity extends Activity {
     }
 
     // ----------------------------------------------------------------         Map Related Functions           ----------------------------------------------------------------------
-    boolean customerMapOn = false;
+    boolean customerMapOn = false, inGuiderPage = false;
     double selected_latitude = 0.0, selected_longitude = 0.0;
 
     public void setUpSelectPosMap () {
@@ -566,7 +606,7 @@ public class MainActivity extends Activity {
                 for (i = 0; i < devices.length; i++)
                     if (devices[i][1].equals("GUIDER"))
                         break;
-                Object[][] commands = rec.getCommandsByDeviceId(db, i);
+                Object[][] commands = rec.getCommandsByDeviceId(db, (int) (devices[i][0]));
                 String content = null;
                 for (i = 0; i < commands.length; i++)
                     if (commands[i][5].equals("SENDPOSITION"))

@@ -6,7 +6,9 @@
     <EditText
         android:id="@+id/name"
         android:hint="使用者名稱"
-        android:layout_width="100dp"
+        android:textSize="40dp"
+        android:textAlignment="center"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="55dp"
         android:layout_centerHorizontal="true"
@@ -15,7 +17,9 @@
     <EditText
         android:id="@+id/phonenumber"
         android:hint="導遊電話"
-        android:layout_width="100dp"
+        android:textSize="40dp"
+        android:textAlignment="center"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="40dp"
         android:layout_centerHorizontal="true"
@@ -24,9 +28,11 @@
 
     <Button
         android:id="@+id/register_btn"
-        android:background="@drawable/btn_blue"
+        android:background="@drawable/btn_style"
         android:text="跟導遊註冊"
-        android:layout_width="wrap_content"
+        android:textSize="40dp"
+        android:textColor="@android:color/white"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="40dp"
         android:layout_centerHorizontal="true"

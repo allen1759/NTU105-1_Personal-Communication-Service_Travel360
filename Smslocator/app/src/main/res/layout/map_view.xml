@@ -5,9 +5,10 @@
 
     <Button
         android:id="@+id/return_btn"
-        android:background="@drawable/btn_blue"
+        android:background="@drawable/btn_style"
         android:text="回上一頁"
         android:textSize="30dp"
+        android:textColor="@android:color/white"
         android:layout_width="match_parent"
         android:layout_height="200px"/>
 
