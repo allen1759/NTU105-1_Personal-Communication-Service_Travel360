@@ -130,6 +130,8 @@ public class MainActivity extends Activity {
         Button getloc_btn = (Button) findViewById(R.id.getloc_btn);
         ListView customer_listview = (ListView) findViewById(R.id.customer_list);
 
+
+
         broadcast_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -326,6 +328,22 @@ public class MainActivity extends Activity {
                         Toast.makeText(MainActivity.this, "這個名字不合法", Toast.LENGTH_LONG).show();
                         return;
                     }
+
+
+                    if(phonenumber.matches("")||name.matches("")) {
+                        AlertDialog.Builder alert = new AlertDialog.Builder(MainActivity.this);
+                        alert.setTitle("警告");
+                        alert.setMessage("請輸入名字或是電話號碼");
+                        alert.setNeutralButton("確定", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                //按下不做任何事情
+                            }
+                        });
+                        alert.show();
+                        return;
+                    }
+
 
                     Recorder rec = Recorder.getSharedRecorder();
                     CommandHandler hdlr = CommandHandler.getSharedCommandHandler();
