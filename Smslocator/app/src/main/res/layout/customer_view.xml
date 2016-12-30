@@ -14,7 +14,7 @@
         <Button
             android:id="@+id/getguiderloc_btn"
             android:background="@drawable/btn_style"
-            android:text="取得導遊位置"
+            android:text="取得集合位置"
             android:textSize="25dp"
             android:textColor="@android:color/white"
             android:layout_width="match_parent"
