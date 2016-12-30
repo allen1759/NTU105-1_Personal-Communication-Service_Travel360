@@ -12,7 +12,7 @@
     <LinearLayout
         android:id="@+id/btns"
         android:layout_width="match_parent"
-        android:layout_height="125px"
+        android:layout_height="130px"
         android:orientation="horizontal"
         android:weightSum="2">
 
